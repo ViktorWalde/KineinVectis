@@ -1,4 +1,4 @@
-# clang-tidy configuration of the C++ core.
+# clang-tidy configuration of the core.
 #
 # Documented in: docs/engineering/static-analysis-clang-tidy.md
 #

@@ -1,4 +1,4 @@
-# GoogleTest for the tests of the C++ core.
+# GoogleTest for the tests of the core.
 #
 # Documented in: docs/engineering/test-strategy.md
 #

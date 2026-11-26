@@ -6,7 +6,7 @@ It closes lessons L04 and L13 ([lessons](../lessons-from-0.3.md)).
 ## Three classes, plus the build tree
 
 From 64 §5.9 (64:603-672), decision DP-08 of the maintainer (64:943). The directory names are
-English in the C++ core; 64 wrote `projetos/`, a name no code uses.
+English in the core; 64 wrote `projetos/`, a name no code uses.
 
 | Class | Where | What |
 | --- | --- | --- |

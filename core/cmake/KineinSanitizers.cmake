@@ -1,4 +1,4 @@
-# Sanitizers of the C++ core.
+# Sanitizers of the core.
 #
 # Documented in: docs/engineering/build-profiles-and-hardening.md
 #

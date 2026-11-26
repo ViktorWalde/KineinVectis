@@ -42,18 +42,19 @@ The full list, with the evidence, is in the [lessons](../lessons-from-0.3.md).
    - the core is the LSP client of the document, and tree-sitter runs in the core.
 4. **The scope is only C and C++** until the core is solid. Rust and Python come back later.
 5. **The behavior of the IDE and its acceptance come from the reference IDEs**, each cited with
-   its version and its source (the code or the official documentation). 0.3 is no reference: it
+   its version and its source (the code or the official documentation); a known defect of a
+   reference is not copied, and the requirement states the divergence. 0.3 is no reference: it
    enters only through the mistakes of the [lessons](../lessons-from-0.3.md).
    - CLion: the fundamental behavior of an IDE for C and C++;
    - IntelliJ IDEA, whose source is open (`JetBrains/intellij-community`): the technical reading
      of that behavior; JetBrains is the reference for safe behavior;
    - VS Code CMake Tools and Qt Creator, alongside CLion: CMake, toolchains and kits;
    - VS Code and Zed: the rest of the behavior of an editor.
-6. **The C++ core replaces the Rust core at the sync with the frontend.** The Rust core and the
+6. **The core replaces the Rust core at the sync with the frontend.** The Rust core and the
    documents of 0.3 are not in the repository: their last state is the tag `v0.3-rust-final`, on
    which the UI runs for dogfooding until the sync (the maintainer's decision of 2026-11-26). The
-   sync happens when the C++ core passes the acceptance of the N0 and N1 requirements, functional
-   and non-functional; the UI then talks to the C++ core over its own contract (P24 in the
+   sync happens when the core passes the acceptance of the N0 and N1 requirements, functional
+   and non-functional; the UI then talks to the core over its own contract (P24 in the
    [pending decisions](../pending-decisions.md)).
 
 ```mermaid
@@ -61,7 +62,7 @@ stateDiagram-v2
     [*] --> Building
     Building: The UI runs on the prototype of v0.3-rust-final; the core passes its own tests
     Building --> Synced: N0 and N1 accepted against the reference IDEs
-    Synced: The UI talks to the C++ core over its own contract (P24)
+    Synced: The UI talks to the core over its own contract (P24)
     Synced --> [*]
 ```
 
@@ -90,15 +91,15 @@ scratch: a known problem is deleted, not patched in place.
   replacing four seams inside the Rust core.
 - **Phases B1 to B11 of 64 §8**, as a code plan. The solutions they described (a launcher with
   trust, execution classes, deadline and cancellation, a contract with a single source, three
-  persistence classes) become requirements of the C++ core.
+  persistence classes) become requirements of the core.
 - **The proposal of 66** (the gates before B1), which awaited a decision: the text gates of 0.3
-  do not enter the C++ core.
+  do not enter the core.
 - **The sentence of 62:2079-2080**, about closing debt "by proven behavior, not by the
   completion of a rewrite". The switch of cores happens only by proven behavior: the criterion of
   item 6 is a measurement, not a completion.
 
 **Items that close with the removal of the Rust core**, with no fix of their own: INF-24, INF-29,
-INF-30, INF-31 and ENG-57. **Items that become requirements of the C++ core:** INF-23, ENG-50 to
+INF-30, INF-31 and ENG-57. **Items that become requirements of the core:** INF-23, ENG-50 to
 ENG-56 and INF-22. **UI items** (INF-25 to INF-28) close with the rebuilt editor, each with its
 test.
 
@@ -114,9 +115,9 @@ test.
 
 ## Consequences
 
-- Until the sync, the C++ core is proven by its own tests against the reference IDEs; no test
+- Until the sync, the core is proven by its own tests against the reference IDEs; no test
   compares it with the Rust core.
-- The contract between the UI and the C++ core is designed from scratch, by its own ADR (P24), and
+- The contract between the UI and the core is designed from scratch, by its own ADR (P24), and
   the client of the UI bridge is rebuilt on it at the sync.
 - The defects of 0.3 stay in the product in use until the sync. INF-26 was fixed in the current
   QML on 2026-11-22 (the maintainer's decision); INF-23 remains, and until the C++ launcher exists

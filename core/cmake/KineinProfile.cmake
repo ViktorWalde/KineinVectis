@@ -1,4 +1,4 @@
-# Build profile of the C++ core.
+# Build profile of the core.
 #
 # Documented in: docs/engineering/build-profiles-and-hardening.md
 #

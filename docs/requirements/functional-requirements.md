@@ -1,4 +1,4 @@
-# Functional requirements of the C++ core
+# Functional requirements of the core
 
 Owner: what the core does, at which priority level, which reference IDE each capability follows,
 which test accepts it, and the delivery order of the base. The limits of time, memory and security
@@ -10,7 +10,7 @@ exist yet.
 ## Scope
 
 - **Languages:** C and C++. Rust and Python come back once the core is solid (ADR-0012).
-- **Outside the C++ core:** databases, Grafana, remote work over SSH, containers, Cargo and
+- **Outside the core:** databases, Grafana, remote work over SSH, containers, Cargo and
   Python.
 - **Reference:** each capability of N0 names the IDE whose behavior it follows, with the version
   and the source, in the order of [ADR-0012](../adr/ADR-0012-cpp23-backend.md) (item 5). Its

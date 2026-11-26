@@ -66,7 +66,7 @@ From 64 §5.5 (64:508-528), restricted to C and C++.
 - **Nothing runs before trust**, including the CMake configure step and the `--query-driver` of
   clangd.
 - **The rule lives in the core**, in the launcher. QML shows the state and asks for the gesture.
-  In 0.3, QML held back the automatic configure (64:306-309); in the C++ core, the core refuses.
+  In 0.3, QML held back the automatic configure (64:306-309); here, the core refuses.
 - **Trust** stays in the person's global state, by the canonical root of the workspace, with the
   trusted folders of DP-02 (64:525-528).
 - **Acceptance:** the hostile project of 64 §2.1, with zero marks

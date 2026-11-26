@@ -122,7 +122,7 @@ boundary.
 
 | Term | Meaning | Owner |
 | --- | --- | --- |
-| product version | The version of Kinein Vectis: the C++ core is 0.1, with tags `CoreCpp-X.Y.Z` | [README](../README.md) |
+| product version | The version of Kinein Vectis: the core is 0.1, with tags `core-X.Y.Z` | [README](../README.md) |
 | protocol version | The version of the contract between the UI and the core (P24) | [protocol](architecture/protocol-and-contract.md) |
 | schema version | The version of the format of a file the core owns | [persistence](architecture/persistence-and-durability.md) |
 

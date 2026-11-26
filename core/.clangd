@@ -1,4 +1,4 @@
-# clangd configuration of the C++ core: the compilation database of the lint preset.
+# clangd configuration of the core: the compilation database of the lint preset.
 #
 # Documented in: docs/engineering/build-profiles-and-hardening.md
 CompileFlags:

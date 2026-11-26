@@ -1,7 +1,7 @@
 # Lessons from 0.3
 
 Owner: what the 0.3 series got wrong, with the evidence of origin and the mechanism
-that prevents the repetition in the C++ core. Citations follow the form of the
+that prevents the repetition in the core. Citations follow the form of the
 [README](README.md#how-to-cite-03).
 
 The fundamental mistakes share one pattern: **the rule existed as an intention, and nothing
@@ -12,7 +12,7 @@ recommendation.
 
 ## Mistakes that must not come back
 
-| ID | What happened | Origin | What the C++ core does | Enforced by |
+| ID | What happened | Origin | What the core does | Enforced by |
 | --- | --- | --- | --- | --- |
 | L01 | The UI owned the text: each LSP request and each `syntaxTree.update` carried the whole file, and the reply brought 1 to 8 MiB per keystroke | ENG-55; 65:67-75; 64:211-232 | The core owns the text. The UI sends each edit as a delta with its base version, and no message after the opening carries the whole document | RNF-EDI-01 ([requirements](requirements/non-functional-requirements.md)) |
 | L02 | Opening a 19,970-line file took 46.2 to 47.9 s: 8.1 times more text, 48.6 times more time | INF-25; 62:1371-1394 | Every path that depends on the file size has a complexity test | RNF-PERF-01 |

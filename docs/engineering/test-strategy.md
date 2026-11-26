@@ -45,7 +45,8 @@ flowchart LR
   the steps.
 - **The test** states that behavior as a fixture and an observable result of the core, never as a
   call into its implementation, and a mutant that breaks the behavior must fail it.
-- **A divergence** from the reference is written in the requirement, with its reason (RF-ED-02
+- **A known defect of the reference** is never copied: the divergence is written in the
+  requirement, with its reason (RF-ED-02
   adds a maximum delay that the backup of VS Code lacks, L04).
 - **No reference** for a behavior: the test proves the expected behavior and how each failure is
   handled.

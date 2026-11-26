@@ -1,4 +1,4 @@
-# Test tree of the C++ core.
+# Test tree of the core.
 #
 # Documented in: docs/engineering/test-strategy.md
 add_subdirectory(build)

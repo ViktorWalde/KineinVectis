@@ -1,4 +1,4 @@
-# Documentation of the C++23 core
+# Documentation of the core
 
 Owner: the map of this tree, the question each file answers, and the rules every file follows.
 
@@ -51,7 +51,7 @@ flowchart TD
 | [lessons-from-0.3.md](lessons-from-0.3.md) | What did 0.3 get wrong, and what prevents each mistake from coming back? |
 | [pending-decisions.md](pending-decisions.md) | What is still the maintainer's decision, with the recommendation? |
 | [glossary.md](glossary.md) | What does each term of the domain mean, and which name does the code give it? |
-| [adr/ADR-0012-cpp23-backend.md](adr/ADR-0012-cpp23-backend.md) | Why C++23, who owns the truth, which component edits, which IDEs are the reference, and when the C++ core replaces the Rust core? |
+| [adr/ADR-0012-cpp23-backend.md](adr/ADR-0012-cpp23-backend.md) | Why C++23, who owns the truth, which component edits, which IDEs are the reference, and when the core replaces the Rust core? |
 | **Requirements** | |
 | [requirements/functional-requirements.md](requirements/functional-requirements.md) | What the core does, in what order, and the acceptance test of each capability |
 | [requirements/non-functional-requirements.md](requirements/non-functional-requirements.md) | Within which measured limits: time, memory, security, durability, quality |

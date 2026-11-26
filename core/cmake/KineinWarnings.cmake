@@ -1,4 +1,4 @@
-# Compiler warnings of the C++ core.
+# Compiler warnings of the core.
 #
 # Documented in: docs/engineering/build-profiles-and-hardening.md
 #

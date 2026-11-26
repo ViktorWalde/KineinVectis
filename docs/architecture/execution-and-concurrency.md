@@ -24,7 +24,7 @@ the design must meet and, after the approval, the design itself.
 
 64 §5.3 proposed three route classes (state on the loop, work outside it, visible job) and a
 three-phase helper: prepare on the loop, work outside it, apply on the loop if the generation has
-not moved (64:395-451). It is a 0.3 reference, not a decision for the C++ core.
+not moved (64:395-451). It is a 0.3 reference, not a decision for the core.
 
 ## Threads and owners
 

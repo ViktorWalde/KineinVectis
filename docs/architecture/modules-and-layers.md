@@ -20,7 +20,7 @@ and the dependency was whatever compiled.
 - **Routing by chain:** one `match` and 40 `or_else`, in a file 35 of the last 300 commits edited
   (ENG-10).
 
-Convention held none of these. The C++ core puts the direction of the dependencies in the build,
+Convention held none of these. The core puts the direction of the dependencies in the build,
 where a mistake fails the configure step.
 
 ## The mechanism

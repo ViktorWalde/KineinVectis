@@ -1,4 +1,4 @@
-# CI of Kinein Vectis 0.1, the C++23 core.
+# CI of the core of Kinein Vectis 0.1.
 #
 # Documented in: docs/engineering/gates-and-effectiveness.md, section "The CI"
 #
@@ -9,7 +9,7 @@
 # - Newest on the runner: GCC 15 and Clang 22, with clang-tidy 22.
 # The preset's compiler is overridden on the command line; the rest of the
 # preset applies.
-name: CoreCpp 0.1
+name: Core 0.1
 
 # The single branch, main. Every pull request into it and every push to it runs in full,
 # with no path filter and without canceling the previous run: every commit gets a verdict.

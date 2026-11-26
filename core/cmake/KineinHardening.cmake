@@ -1,4 +1,4 @@
-# Hardening flags of the C++ core.
+# Hardening flags of the core.
 #
 # Documented in: docs/engineering/build-profiles-and-hardening.md
 #

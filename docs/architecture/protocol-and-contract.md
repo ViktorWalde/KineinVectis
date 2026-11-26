@@ -1,11 +1,11 @@
 # Protocol and contract
 
-Owner: the contract between the UI and the C++ core, what holds of it before its ADR, and how it
+Owner: the contract between the UI and the core, what holds of it before its ADR, and how it
 changes.
 
 ## The contract
 
-The contract between the UI and the C++ core is its own. The maintainer designs it by ADR before
+The contract between the UI and the core is its own. The maintainer designs it by ADR before
 the `protocol` module (P24 in the [pending decisions](../pending-decisions.md)), and the editing
 protocol (P22) is part of it. The protocol of the Rust core is no reference for it.
 
@@ -23,7 +23,7 @@ What holds whatever the ADR decides:
 ```mermaid
 flowchart LR
     ADR["ADR of the contract<br/>P24, with P22"] --> SRC["single source<br/>of the shapes"]
-    SRC -->|contract test| CORE["C++ core"]
+    SRC -->|contract test| CORE["core"]
     SRC -->|contract test| BRIDGE["UI bridge"]
 ```
 

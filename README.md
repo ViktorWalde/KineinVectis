@@ -31,17 +31,17 @@ The decision is recorded in
   of IntelliJ IDEA, VS Code CMake Tools, Qt Creator, VS Code and Zed. The prototype is no
   reference.
 - The UI connects to the new core when it passes the acceptance of levels N0 and N1, over its own
-  contract; until then the UI runs on the prototype of the tag `v0.3-rust-final`. At the connection, the
-  code of the UI with a known problem is deleted, not fixed.
+  contract; until then the UI runs on the prototype of the tag `v0.3-rust-final`. At the connection,
+  the code of the UI with a known problem is deleted, not fixed.
 
 ```mermaid
 flowchart LR
-    BASE["Engineering base<br/>CI, gates, architecture,<br/>requirements"] --> CORE01["C++23 core 0.1<br/>tag CoreCpp-0.1.0"]
+    BASE["Engineering base<br/>CI, gates, architecture,<br/>requirements"] --> CORE01["Core 0.1<br/>tag core-0.1.0"]
     CORE01 --> SYNC["Sync with the frontend<br/>N0 and N1 accepted"]
     RUST["Rust prototype<br/>tag v0.3-rust-final"] -->|replaced at the sync| SYNC
 ```
 
-The C++ core is version 0.1 of Kinein Vectis. Its tags use their own prefix, `CoreCpp-X.Y.Z`
+The core is version 0.1 of Kinein Vectis. Its tags use their own prefix, `core-X.Y.Z`
 ([Semantic Versioning](https://semver.org/)), so they never sort among the `v0.2.0` and `v0.3.5`
 tags of the prototype.
 
@@ -49,7 +49,7 @@ tags of the prototype.
 
 Code without planning is technical debt. The prototype grew one feature at a time, without a
 bounded scope, a product vision or the consolidation of what existed before the next feature
-started. The C++ core reverses that order: C++ code enters `core/lib` and `core/qt` only after the
+started. The core reverses that order: code enters `core/lib` and `core/qt` only after the
 maintainer closes five conditions. On 2026-11-23 all five are open; the decisions that block them
 are listed in [docs/pending-decisions.md](docs/pending-decisions.md).
 
@@ -100,10 +100,10 @@ map of the documentation is in [docs/README.md](docs/README.md).
 
 | Path | Content | State |
 | --- | --- | --- |
-| `core/` | The C++23 core: CMake project, build profiles, tests and gates | Active, the focus of the project |
-| `docs/` | Documentation of the C++ core: requirements, architecture, engineering, ADRs | Active |
-| `.github/` | The `CoreCpp 0.1` workflow and the issue and pull request templates | Active |
-| `schemas/ipc.schema.json` | Contract between the UI and the Rust core | Frozen; no reference for the C++ core |
+| `core/` | The core: CMake project, build profiles, tests and gates | Active, the focus of the project |
+| `docs/` | Documentation of the core: requirements, architecture, engineering, ADRs | Active |
+| `.github/` | The `Core 0.1` workflow and the issue and pull request templates | Active |
+| `schemas/ipc.schema.json` | Contract between the UI and the Rust core | Frozen; no reference for the core |
 | `ui/` | Qt Quick frontend and its C++ bridge | Kept; a change to its logic needs the maintainer's approval. At the sync, its code with a known problem is deleted |
 
 ## Building the core
@@ -149,9 +149,9 @@ Configure downloads GoogleTest 1.17.0 with a pinned SHA-256. Without network acc
 
 ## CI and quality gates
 
-The `CoreCpp 0.1` workflow ([`.github/workflows/core.yml`](.github/workflows/core.yml)) is the only
-CI of the repository. Every change reaches `main`, the single branch, through a pull request. The
-workflow runs on every pull request into `main` and every push to it, with no path filter, in
+The `Core 0.1` workflow ([`.github/workflows/core.yml`](.github/workflows/core.yml)) is the only
+CI of the repository. It runs on every push to `main`, the single branch, and on every pull request
+into it, with no path filter, in
 11 jobs on `ubuntu-26.04`: the compiler floor (`dev` with GCC 14 and with Clang 20), GCC 15 in
 every profile, and Clang 22 with clang-tidy 22 in `lint` and in both sanitizer profiles. Actions are
 pinned by commit SHA, and the token is read-only.

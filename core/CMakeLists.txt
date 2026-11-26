@@ -1,4 +1,4 @@
-# Top-level CMake project of the Kinein Vectis C++23 core.
+# Top-level CMake project of the core of Kinein Vectis.
 #
 # Documented in: docs/architecture/boundaries-and-responsibilities.md
 #

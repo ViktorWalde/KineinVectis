@@ -1,4 +1,4 @@
-# Non-functional requirements of the C++ core
+# Non-functional requirements of the core
 
 Owner: the measured limit of each quality of the core, the measurement method and what enforces
 it. A requirement with nothing that enforces it does not count as met.
