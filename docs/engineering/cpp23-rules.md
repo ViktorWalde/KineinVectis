@@ -15,8 +15,7 @@ rule marked so is a candidate for a mechanism. "CG" cites the
 
 | Rule | Why | Enforced by |
 | --- | --- | --- |
-| C++23 with no extensions (`CMAKE_CXX_EXTENSIONS OFF`) | Code portable between GCC, Clang and MSVC, which clangd understands | `build.contract` fails on `-std=gnu++` |
-| C++26 only through an ADR, one feature at a time, once GCC, clangd and MSVC support it without the experimental label, guarded by a feature-test macro (`__cpp_*`) | C++26 is not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection (P2996) | Review; the `cxx26-probe` preset only detects incompatibilities |
+| C++23 with no extensions (`CMAKE_CXX_EXTENSIONS OFF`), in the core and in the UI (the maintainer's decision of 2026-11-26) | Code portable between GCC, Clang and MSVC, which clangd understands. C++26 is not published (the DIS ballot of 2026-10-23 failed), GCC 16 marks its support as experimental, and the official Clang 23 has no reflection (P2996) | `build.contract` fails on another standard or on `-std=gnu++`, in the core; review, in the UI |
 | English for everything a contributor reads: identifiers, comments, messages, file names, documentation | Contributors read English | Review |
 | The warnings and protections of the profile, `-Werror` in development | The OpenSSF compiler hardening baseline, adapted per compiler ([profiles](build-profiles-and-hardening.md)) | The compiler; `build.contract`, `build.elf_hardening` |
 | A Unicode bidirectional character in the code fails the build | Trojan Source (CVE-2021-42574) | `-Wbidi-chars=any` (GCC) |

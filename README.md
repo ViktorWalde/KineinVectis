@@ -139,7 +139,6 @@ KINEIN_QT_PREFIX=$HOME/Qt/6.12.1/gcc_64 cmake --workflow --preset dev-qt
 | `debug-stl` | Standard library debug mode (`_GLIBCXX_DEBUG`, `-O0`) |
 | `production` | The shipped build: same flags as `dev`, without `-Werror` |
 | `lint` | Clang with clang-tidy on every unit, plus the measurement of the gates |
-| `cxx26-probe` | Builds with C++26 to detect incompatibilities early |
 | `dev-qt` | `dev` plus the Qt adapter, with Qt from `KINEIN_QT_PREFIX` |
 
 Configure downloads GoogleTest 1.17.0 with a pinned SHA-256. Without network access, pass

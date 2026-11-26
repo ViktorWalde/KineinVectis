@@ -14,13 +14,10 @@ if(NOT KINEIN_PROFILE IN_LIST KINEIN_PROFILES)
     message(FATAL_ERROR "KINEIN_PROFILE='${KINEIN_PROFILE}' does not exist. Use one of: ${KINEIN_PROFILES}")
 endif()
 
-# C++23 without extensions. 26 exists only for the probe job (docs/engineering/cpp23-rules.md).
-set(KINEIN_CXX_STANDARD "23" CACHE STRING "Language standard: 23; 26 only in the probe")
-set_property(CACHE KINEIN_CXX_STANDARD PROPERTY STRINGS 23 26)
-if(NOT KINEIN_CXX_STANDARD MATCHES "^(23|26)$")
-    message(FATAL_ERROR "KINEIN_CXX_STANDARD='${KINEIN_CXX_STANDARD}': use 23 or 26")
-endif()
-set(CMAKE_CXX_STANDARD ${KINEIN_CXX_STANDARD})
+# C++23 without extensions, in the whole project: the maintainer's decision of 2026-11-26
+# (RNF-QUA-04). A normal variable, so no cache value replaces it; build.contract checks what
+# reaches the compiler (docs/engineering/cpp23-rules.md).
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -102,5 +99,5 @@ function(kinein_apply_profile target kind)
     kinein_apply_sanitizers("${target}")
 endfunction()
 
-message(STATUS "Kinein core: profile ${KINEIN_PROFILE}, C++${KINEIN_CXX_STANDARD}, "
+message(STATUS "Kinein core: profile ${KINEIN_PROFILE}, C++${CMAKE_CXX_STANDARD}, "
                "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

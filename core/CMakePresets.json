@@ -10,7 +10,6 @@
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_COMPILER": "g++",
-        "KINEIN_CXX_STANDARD": "23",
         "KINEIN_WERROR": "ON"
       }
     },
@@ -58,15 +57,6 @@
       }
     },
     {
-      "name": "cxx26-probe",
-      "inherits": "base",
-      "displayName": "C++26 probe (detects incompatibilities only)",
-      "cacheVariables": {
-        "KINEIN_PROFILE": "dev",
-        "KINEIN_CXX_STANDARD": "26"
-      }
-    },
-    {
       "name": "dev-qt",
       "inherits": "dev",
       "displayName": "Development with the Qt adapter (KINEIN_QT_PREFIX)",
@@ -83,7 +73,6 @@
     { "name": "debug-stl", "configurePreset": "debug-stl" },
     { "name": "production", "configurePreset": "production" },
     { "name": "lint", "configurePreset": "lint" },
-    { "name": "cxx26-probe", "configurePreset": "cxx26-probe" },
     { "name": "dev-qt", "configurePreset": "dev-qt" }
   ],
   "testPresets": [
@@ -94,7 +83,6 @@
     { "name": "debug-stl", "inherits": "base", "configurePreset": "debug-stl" },
     { "name": "production", "inherits": "base", "configurePreset": "production" },
     { "name": "lint", "inherits": "base", "configurePreset": "lint" },
-    { "name": "cxx26-probe", "inherits": "base", "configurePreset": "cxx26-probe" },
     { "name": "dev-qt", "inherits": "base", "configurePreset": "dev-qt" }
   ],
   "workflowPresets": [
@@ -104,7 +92,6 @@
     { "name": "debug-stl", "steps": [ { "type": "configure", "name": "debug-stl" }, { "type": "build", "name": "debug-stl" }, { "type": "test", "name": "debug-stl" } ] },
     { "name": "production", "steps": [ { "type": "configure", "name": "production" }, { "type": "build", "name": "production" }, { "type": "test", "name": "production" } ] },
     { "name": "lint", "steps": [ { "type": "configure", "name": "lint" }, { "type": "build", "name": "lint" }, { "type": "test", "name": "lint" } ] },
-    { "name": "cxx26-probe", "steps": [ { "type": "configure", "name": "cxx26-probe" }, { "type": "build", "name": "cxx26-probe" }, { "type": "test", "name": "cxx26-probe" } ] },
     { "name": "dev-qt", "steps": [ { "type": "configure", "name": "dev-qt" }, { "type": "build", "name": "dev-qt" }, { "type": "test", "name": "dev-qt" } ] }
   ]
 }

@@ -3,7 +3,8 @@
 > **State:** accepted by the maintainer on 2026-11-25.
 > **Decision by the maintainer:** 2026-11-22 (C++23 backend); 2026-11-23 (the core owns the
 > truth, the frontend has no domain logic, the editor is a ready component); 2026-11-25 (the
-> reference IDEs and the sync with the frontend).
+> reference IDEs and the sync with the frontend); 2026-11-26 (C++23 with no extensions in the
+> whole project, the UI included).
 > The numbering continues the ADRs of 0.3 (tag `v0.3.5`).
 
 ## Context
@@ -90,7 +91,7 @@ scratch: a known problem is deleted, not patched in place.
 | Alternative | Why not |
 | --- | --- |
 | Fixing four seams inside the Rust core | It was the plan decided on 2026-11-14. The decision of 2026-11-22 revises it, for the reasons of the section "Why" |
-| C++26 | Not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection, and clangd would not understand the code. C++26 features enter one at a time, by ADR |
+| C++26 | Not published (the DIS ballot of 2026-10-23 failed); GCC 16 marks its support as experimental; the official Clang 23 has no reflection, and clangd would not understand the code. The whole project builds as C++23, with no C++26 build |
 | Rewriting the views too | The views and the theme work and are the IDE of dogfooding; what is wrong in the UI is the domain logic and the code with a known problem, which leave it (item 2) |
 | QScintilla or KTextEditor | `QWidget` components, outside the Qt Quick scene. The Qt Quick port of Scintilla lives in a fork with no commit since 2023-03 |
 | KSyntaxHighlighting | Highlighting by regular expressions; tree-sitter gives an incremental syntax tree, which also feeds the analysis of the core |

@@ -47,7 +47,6 @@ jobs:
           - { preset: asan-ubsan, cxx: g++-15 }
           - { preset: tsan, cxx: g++-15 }
           - { preset: debug-stl, cxx: g++-15 }
-          - { preset: cxx26-probe, cxx: g++-15 }
           - { preset: lint, cxx: clang++-22, tidy: clang-tidy-22, pyclang: python3-clang-22 }
           - { preset: asan-ubsan, cxx: clang++-22 }
           - { preset: tsan, cxx: clang++-22 }

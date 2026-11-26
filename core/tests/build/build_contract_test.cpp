@@ -2,16 +2,12 @@
 //
 // Documented in: docs/engineering/build-profiles-and-hardening.md
 //
-// CMake declares the profile (KINEIN_EXPECTED_PROFILE_*) and the language standard
-// (KINEIN_EXPECTED_CXX_STANDARD). Each #error or static_assert that fires here is a build defect,
-// not a code defect: a promised flag that did not arrive.
+// CMake declares the profile (KINEIN_EXPECTED_PROFILE_*). The language standard is C++23 in every
+// profile (RNF-QUA-04), so it is fixed here and not read from CMake. Each #error or static_assert
+// that fires here is a build defect, not a code defect: a promised flag that did not arrive.
 
 // <cstdlib> also brings glibc's <features.h> and libstdc++'s <bits/c++config.h>.
 #include <cstdlib>
-
-#if !defined(KINEIN_EXPECTED_CXX_STANDARD)
-#error "KINEIN_EXPECTED_CXX_STANDARD was not defined by CMake"
-#endif
 
 namespace {
 
@@ -21,13 +17,7 @@ constexpr long language_version = _MSVC_LANG;
 constexpr long language_version = __cplusplus;
 #endif
 
-#if KINEIN_EXPECTED_CXX_STANDARD == 23
-static_assert(language_version == 202302L, "the profile promises C++23");
-#elif KINEIN_EXPECTED_CXX_STANDARD == 26
-static_assert(language_version > 202302L, "the probe promises C++26");
-#else
-#error "KINEIN_EXPECTED_CXX_STANDARD must be 23 or 26"
-#endif
+static_assert(language_version == 202302L, "the project promises C++23");
 
 } // namespace
 

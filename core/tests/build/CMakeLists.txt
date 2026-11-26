@@ -10,7 +10,6 @@ string(MAKE_C_IDENTIFIER "${KINEIN_PROFILE}" profile_id)
 string(TOUPPER "${profile_id}" profile_id)
 target_compile_definitions(kinein_build_contract_test PRIVATE
     KINEIN_EXPECTED_PROFILE_${profile_id}=1
-    KINEIN_EXPECTED_CXX_STANDARD=${KINEIN_CXX_STANDARD}
 )
 
 add_test(NAME build.contract COMMAND kinein_build_contract_test)

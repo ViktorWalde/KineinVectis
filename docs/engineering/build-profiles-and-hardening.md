@@ -29,7 +29,6 @@ The build trees go to `build/core-<preset>/`, at the repository root, which git 
 | `tsan` | tsan | GCC | TSan, without FORTIFY; `-O1 -g` | Find data races |
 | `debug-stl` | debug-stl | GCC | `_GLIBCXX_DEBUG`; `-O0 -g3` | Invalid iterators and library preconditions; step-by-step debugging |
 | `lint` | dev | Clang | clang-tidy on each unit | Static analysis, and the second compiler with `-Werror` |
-| `cxx26-probe` | dev | GCC | `-std=c++26` | Only detect incompatibilities with C++26 |
 | `dev-qt` | dev | GCC | builds `core/qt` | The Qt adapter |
 
 Each target gets its profile from one orchestrator, `kinein_apply_profile(<target> <kind>)` in

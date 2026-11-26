@@ -43,7 +43,8 @@ flowchart LR
 
 ### `build.contract` and `build.elf_hardening` (2026-11-22)
 
-Measured on a copy of `core/`, one defect at a time, with GCC 16.2.1, Clang 23.1.5 and GNU ld 2.47.
+Measured on a copy of `core/`, one defect at a time, with GCC 16.2.1, Clang 23.1.5 and GNU ld 2.47;
+D01, D14 and D17 on 2026-11-26, against the C++23 that the test fixes.
 
 | # | Planted defect | Preset | Rejected by |
 | --- | --- | --- | --- |
@@ -63,13 +64,14 @@ Measured on a copy of `core/`, one defect at a time, with GCC 16.2.1, Clang 23.1
 | D14 | `CMAKE_CXX_STANDARD 20` | dev | `build.contract` |
 | D15 | `asan-ubsan` profile without ASan | asan-ubsan | `build.contract` |
 | D16 | PIE at compile time, link with `-no-pie` | dev | `build.elf_hardening` |
+| D17 | `CMAKE_CXX_STANDARD 26` | dev | `build.contract` |
 
-- **Defects:** 16 of 16 rejected.
+- **Defects:** 17 of 17 rejected.
 - **Equivalent:** a `-no-pie` added to the link without disabling CMake's PIE. CMake's `-pie`
   comes later on the command line and wins, and the binary stays PIE (checked with `readelf -h`).
-- **Correct forms:** 12 of 12 accepted: the eight presets (dev, asan-ubsan, tsan, debug-stl,
-  production, lint, cxx26-probe, dev-qt) and the asan-ubsan, tsan, production and debug-stl
-  profiles built with Clang.
+- **Correct forms:** 11 of 11 accepted: the seven presets (dev, asan-ubsan, tsan, debug-stl,
+  production, lint, dev-qt) and the asan-ubsan, tsan, production and debug-stl profiles built
+  with Clang.
 - **Verdict:** they enter. **Limit:** no hard correct form, because the target is a single file.
   They cover neither MSVC nor aarch64.
 
@@ -100,7 +102,7 @@ and no other line.
 - **Defect:** GoogleTest built without the profile in `debug-stl`, hence without
   `_GLIBCXX_DEBUG`. Rejected at link time (`undefined reference`).
 - **Mechanism:** the probe takes a `std::vector`; the return type is not part of the mangled name.
-- **Correct form:** the eight presets, green.
+- **Correct form:** the seven presets, green.
 - **Verdict:** it enters.
 
 ### `gate.detach`: no detached thread (2026-11-23)
@@ -126,7 +128,7 @@ in `core/tests/gates/threads/`.
 - **The Clang side does not catch the pair:** the compiler flags nothing, and clang-tidy's
   `misc-misleading-bidirectional` flags only the open pair, which GCC catches. It adds nothing to
   the CI, which always runs GCC, so it is not enabled.
-- **Correct form:** the eight presets, green.
+- **Correct form:** the seven presets, green.
 - **Verdict:** it enters, on GCC only.
 
 ### `gate.duplication`: copied logic, T1 to T3 (2026-11-23)
@@ -167,7 +169,7 @@ runner default is `bash -e`: measured in run 45188723983).
 | Jobs | Compiler | What for |
 | --- | --- | --- |
 | `dev` | g++-14 and clang++-20 | The declared floor |
-| `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl`, `cxx26-probe` | g++-15 | Every profile, on the newest GCC of the runner |
+| `dev`, `production`, `asan-ubsan`, `tsan`, `debug-stl` | g++-15 | Every profile, on the newest GCC of the runner |
 | `lint` (with clang-tidy 22 and `python3-clang-22`), `asan-ubsan`, `tsan` | clang++-22 | The second compiler and the static analysis |
 
 - **Security:** read-only token, checkout v7.0.1 pinned by SHA (the latest release on 2026-11-23,

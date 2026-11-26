@@ -16,7 +16,7 @@ if(KINEIN_CLANG_TIDY)
             --clang-tidy "${KINEIN_CLANG_TIDY_EXE}"
             --config "${PROJECT_SOURCE_DIR}/.clang-tidy"
             --check bugprone-unsafe-functions
-            --std "${KINEIN_CXX_STANDARD}"
+            --std "${CMAKE_CXX_STANDARD}"
             --reject "${CMAKE_CURRENT_SOURCE_DIR}/launcher/forbidden-processes.cpp"
             --accept "${CMAKE_CURRENT_SOURCE_DIR}/launcher/allowed-processes.cpp")
 
@@ -26,7 +26,7 @@ if(KINEIN_CLANG_TIDY)
             --clang-tidy "${KINEIN_CLANG_TIDY_EXE}"
             --config "${PROJECT_SOURCE_DIR}/.clang-tidy"
             --check bugprone-unsafe-functions
-            --std "${KINEIN_CXX_STANDARD}"
+            --std "${CMAKE_CXX_STANDARD}"
             --reject "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-forbidden.cpp"
             --accept "${CMAKE_CURRENT_SOURCE_DIR}/threads/detach-allowed.cpp")
 
@@ -61,6 +61,6 @@ if(KINEIN_CLANG_TIDY)
         COMMAND "${Python3_EXECUTABLE}" -I "${CMAKE_CURRENT_SOURCE_DIR}/duplication/clones.py"
             --libclang "${KINEIN_LIBCLANG}"
             --resource-dir "${KINEIN_CLANG_RESOURCE_DIR}"
-            --std "${KINEIN_CXX_STANDARD}"
+            --std "${CMAKE_CXX_STANDARD}"
             measure "${CMAKE_CURRENT_SOURCE_DIR}/duplication")
 endif()

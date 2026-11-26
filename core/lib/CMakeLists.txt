@@ -8,4 +8,4 @@
 # It never gets AUTOMOC nor a Qt link; the dev preset does not even look for Qt.
 add_library(kinein_core_lib INTERFACE)
 add_library(kinein::core_lib ALIAS kinein_core_lib)
-target_compile_features(kinein_core_lib INTERFACE cxx_std_${KINEIN_CXX_STANDARD})
+target_compile_features(kinein_core_lib INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
