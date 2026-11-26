@@ -19,6 +19,9 @@ What holds whatever the ADR decides:
   deltas, and the core sends facts ([boundaries](boundaries-and-responsibilities.md)).
 - **The protocol version** is the version of the contract; the core reports the version it
   implements.
+- **The channel** is the stdin and the stdout of the core, the child process the UI starts
+  (`StdioTransport`, [modules](modules-and-layers.md)). The core accepts no connection
+  (RNF-SEG-03); a command-line client is decided with P24.
 
 ```mermaid
 flowchart LR

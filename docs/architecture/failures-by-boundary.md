@@ -73,7 +73,8 @@ Answered by an owner:
 
 - a change on the disk and a deletion
   ([the life of a document](editing-engine.md#the-life-of-a-document));
-- a link or a file that is not regular, refused, and a newer schema, preserved
+- an own file that is a link or is not regular, refused; a workspace file that is a link, saved
+  to its target; a newer schema, preserved
   ([writing rules](persistence-and-durability.md#writing-rules));
 - invalid UTF-8, a NUL, mixed line endings
   ([file content](text-encoding-and-positions.md#file-content));

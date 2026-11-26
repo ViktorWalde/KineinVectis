@@ -19,6 +19,13 @@ The maintainer's decision of 2026-11-14 (DP-08). State and cache follow the
   the same volume through the identity of the directory.
 - Opening a folder without trust writes nothing in it.
 - Each own file has an owner, a class and a schema version in a single catalog.
+- **Each setting declares its scope**, the person's or the workspace's, since `.kinein/` arrives
+  through git. A value of the person's scope found in `.kinein/` is ignored, with a notice. Trust,
+  the network, where state and drafts live, and each defense of the
+  [threat model](threat-model.md) are of the person's scope (the maintainer's decision of
+  2026-11-26). VS Code splits its settings the same way: `application` and `machine` "can only be
+  configured in user settings"
+  ([contribution points](https://code.visualstudio.com/api/references/contribution-points#contributes.configuration)).
 
 ## Writing rules
 
@@ -26,7 +33,9 @@ The maintainer's decision of 2026-11-14 (DP-08). State and cache follow the
 | --- | --- |
 | Atomic write: temporary file in the same directory, `fsync`, rename, `fsync` of the directory | RNF-DUR-02 |
 | Write with the expected content: if the disk changed since the read, the write is refused with the conflict | IntelliJ IDEA 2026.3: the file is refreshed before each write (`FileDocumentManagerImpl.doSaveDocument`) |
-| Never follow a link, never open what is not a regular file | CWE-59, link following ([MITRE](https://cwe.mitre.org/data/definitions/59.html)) |
+| An own file: never through a link, never what is not a regular file | CWE-59, link following ([MITRE](https://cwe.mitre.org/data/definitions/59.html)) |
+| A workspace file that is a link: the save writes its target, with the temporary file in the directory of the target, so the link stays | IntelliJ IDEA 2026.3 writes the path, which follows the link (`LocalFileSystemBase.getOutputStream`, `SafeFileOutputStream`); the maintainer's decision of 2026-11-26 |
+| Own directories are created with mode 0700 and own files with 0600, the mode given at creation | A draft holds typed text, and with the umask 022 of Fedora 45 (`/etc/login.defs`, measured on 2026-11-26) `mkdir` gives 0755 (CWE-732, [MITRE](https://cwe.mitre.org/data/definitions/732.html)); the maintainer's decision of 2026-11-26 |
 | Never overwrite a file that is not understood (a newer schema version): warn and preserve | The design of the core |
 | Migration of the 0.3 `.kinein`: copy, read back, and only then remove | L13 |
 

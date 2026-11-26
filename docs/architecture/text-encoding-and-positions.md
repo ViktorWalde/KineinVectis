@@ -133,6 +133,20 @@ flowchart TD
   by default (vscode 1.147.0, `editorOptions.ts`, `unusualLineTerminators`, `prompt`). U+0085 is an
   ordinary character for `TextEdit`, LSP and the core, and needs no rule.
 
+## Invisible and bidirectional characters
+
+Before trusting a workspace, the person reads its code, and a bidirectional control reorders what
+`TextEdit` draws while it stays invisible (Trojan Source, CVE-2021-42574). For each version of an
+open document, the core reports the position of each character below, in the units of the UI,
+and the UI draws a mark on it. A setting of the workspace does not turn it off (the maintainer's
+decision of 2026-11-26).
+
+| Marked | Characters | Source |
+| --- | --- | --- |
+| Always | `Bidi_Control`: U+061C, U+200E, U+200F, U+202A to U+202E, U+2066 to U+2069 | Unicode 18.0, `PropList.txt`. VS Code 1.148.0 draws the same 12 (`viewLineRenderer.ts`, `isControlCharacter`) |
+| Always | A C0 control other than tab and the line break; DEL; `Default_Ignorable_Code_Point`, except the BOM | Unicode 18.0, `DerivedCoreProperties.txt`. VS Code 1.148.0 marks invisible characters by default (`editorOptions.ts`, `unicodeHighlight.invisibleCharacters`) |
+| In the restricted mode | Every character outside U+0020 to U+007E, tab and the line break | VS Code 1.148.0: `unicodeHighlight.nonBasicASCII` defaults to `inUntrustedWorkspace` |
+
 ## Invariants
 
 1. Block `i` of the UI's copy is line `i` of the core's document. The rules on line endings and
@@ -153,6 +167,9 @@ flowchart TD
    and Clang bytes convert to the same position. A mutant with a tab stop of 4 fails it.
 4. **Content:** one file per case (NUL, invalid UTF-8, mixed endings, a lone `\r`, U+2028,
    U+2029, a BOM) reaches its state with its notice, and the gesture makes it editable (RF-ED-05).
+6. **Marks:** a fixture with each of the 12 `Bidi_Control` characters, a zero width space and a
+   non-ASCII letter: each character is marked, the letter only in the restricted mode. A mutant
+   that skips U+2066 to U+2069 fails it.
 5. **LSP:** clangd answers `utf-8`; a test server that answers nothing gives the same positions in
    `utf-16`.
 
@@ -165,3 +182,5 @@ flowchart TD
 - A header with a lone `\r` that clangd reads from disk: its lines differ from the core's. Not
   measured.
 - GCC's width table for non-ASCII characters; hence the rule that keeps only the line.
+- How the UI draws a mark on a character of zero width in `TextEdit`: decided with the
+  measurement of the editor.

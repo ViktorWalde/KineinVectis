@@ -34,6 +34,13 @@ The rules:
   hooks (`core.fsmonitor` and `core.hooksPath` of `git-config`).
 - **A compiler that a file of the workspace names** (a CMake preset or a toolchain file) belongs
   to the workspace.
+- **The program is an absolute path** (CWE-426). Detection resolves each program and skips an
+  empty or relative entry of `PATH` and a directory inside the workspace; the launcher calls
+  `posix_spawn`, never `posix_spawnp`. An empty entry means the current directory
+  ([environ(7)](https://man7.org/linux/man-pages/man7/environ.7.html)), here the workspace.
+- **An operand from the workspace is never an option** (CWE-88): a path goes absolute; a branch
+  or a revision goes after `--end-of-options` ([gitcli](https://git-scm.com/docs/gitcli)); a tool
+  with no such marker never receives one.
 - **An `exec` failure** returns as a typed error, with the system error, with no abort or core
   dump (L18).
 - **Every launch** records the program, the origin, the decision, the duration, the exit code and
@@ -61,9 +68,13 @@ As the restricted mode of VS Code and the safe mode of CLion 2026.3 ([project se
 | Git | off, with a notice | yes |
 | CMake configure, build, run, test, debug, flash | asks for trust on the gesture | yes |
 | `--version` of a tool of the workspace | no | yes |
+| Terminal | asks for trust on the gesture | yes |
 
 - **Nothing runs before trust**, including the CMake configure step and the `--query-driver` of
   clangd.
+- **The terminal** asks for trust, as in VS Code: a shell can run code of the workspace when it
+  starts ([Workspace Trust](https://code.visualstudio.com/docs/editing/workspaces/workspace-trust)).
+  Its environment is the person's, not the allow list.
 - **The rule lives in the core**, in the launcher. QML shows the state and asks for the gesture.
   The core refuses, not the UI (L14).
 - **Trust** stays in the person's global state, by the canonical root of the workspace, with the

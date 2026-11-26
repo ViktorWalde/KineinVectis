@@ -70,3 +70,13 @@ own: it accepts a cycle between `STATIC` libraries (measured on 2026-11-22).
 Until the core passes the acceptance of N0 and N1, the UI runs on the Rust prototype of the tag
 `v0.3-rust-final`, outside this tree. The criterion of the sync is in
 [ADR-0012](../adr/ADR-0012-cpp23-backend.md).
+
+**At the sync, text from outside the IDE reaches the person with no network access** (the
+maintainer's decision of 2026-11-26). Text from a file, a tool or clangd is shown as plain text,
+or as markdown the core reduced to no image and no HTML, and the QML engine has no network access
+(`QQmlNetworkAccessManagerFactory`). Qt Quick's `Text` detects its format by default and, in any
+format but plain text, loads remote images: "when displaying user-controlled, untrusted content,
+the textFormat should either be explicitly set to Text.PlainText, or the contents should be
+stripped of unwanted tags" ([Text](https://doc.qt.io/qt-6/qml-qtquick-text.html), `textFormat`).
+The editor's `TextEdit` is plain text by default. Acceptance: a hover over a comment with a remote
+image makes no connection, and a mutant with the automatic format fails it.

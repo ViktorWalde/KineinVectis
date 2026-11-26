@@ -39,6 +39,7 @@ maintainer's decision.
 | --- | --- | --- | --- | --- |
 | RNF-SEG-01 | Without trust, nothing the workspace defines runs | Zero marks in the hostile project for the opening of the workspace, for each automatic request of the UI and for the first file of each language | The paths of L05 as a fixture | The launcher and the hostile project test, with a mutant of the guard |
 | RNF-SEG-02 | Every process states where it came from | Every launch recorded with program, origin and trust decision | Launcher record | The origin is a mandatory field of the launch request |
+| RNF-SEG-03 *(0.1)* | The core accepts no connection | Zero listening sockets of the core process, from its start to its shutdown (the maintainer's decision of 2026-11-26) | The sockets of the core listed from `/proc` after the opening of a workspace | Test with a mutant that opens a listening socket ([threat model](../architecture/threat-model.md#the-ui-and-the-core)) |
 | RNF-PRIV-01 | Zero telemetry; nothing leaves the machine without a gesture of the person | Zero network connections started by the core without an explicit request | Test with the network denied | The same test |
 
 ## Data and durability

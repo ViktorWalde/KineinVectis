@@ -38,6 +38,7 @@ flowchart TD
     ARCH --> EDIT["editing-engine.md"]
     ARCH --> TEXT["text-encoding-and-positions.md"]
     ARCH --> FAIL["failures-by-boundary.md"]
+    ARCH --> THREAT["threat-model.md"]
     ENG --> RULES["cpp23-rules.md"]
     ENG --> DEFECTS["known-cpp-defects-and-defenses.md"]
     ENG --> PROFILES["build-profiles-and-hardening.md"]
@@ -66,6 +67,7 @@ flowchart TD
 | [architecture/editing-engine.md](architecture/editing-engine.md) | Which component edits, who owns the text of a document, how an edit travels and how a large file degrades |
 | [architecture/text-encoding-and-positions.md](architecture/text-encoding-and-positions.md) | How the bytes of a file become text, how lines end, which unit each component counts a position in, and who converts |
 | [architecture/failures-by-boundary.md](architecture/failures-by-boundary.md) | How each boundary of the core fails, the cause the core names, its answer and the test of each failure |
+| [architecture/threat-model.md](architecture/threat-model.md) | What the core protects, from whom, the defense of each threat by STRIDE and the risks it accepts |
 | **Engineering** | |
 | [engineering/cpp23-rules.md](engineering/cpp23-rules.md) | The C++ methods of the project, the comment standard and what enforces each one |
 | [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | The classic defects of the language and the defense against each one |
