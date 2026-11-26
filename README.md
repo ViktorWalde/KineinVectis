@@ -2,11 +2,10 @@
 
 **Linux-first IDE for embedded, systems and IoT development.**
 
-> **This branch, `reescrita/core-cpp23`, rebuilds the core of the IDE in C++23.** It is an
-> engineering front: the CI, the quality gates, the architecture and the requirements come before
-> any feature code, and the C++ core has no editor functionality yet. The public release is 0.3.5
-> (tag `v0.3.5`, on the Releases page of this repository), built on the Rust core of the `main`
-> branch.
+> **`main` rebuilds the core of the IDE in C++23.** It is an engineering front: the CI, the
+> quality gates, the architecture and the requirements come before any feature code, and the C++
+> core has no editor functionality yet. The public release is 0.3.5 (tag `v0.3.5`, on the Releases
+> page of this repository), built on the Rust prototype.
 
 ## The rewrite
 
@@ -54,7 +53,7 @@ tags of the prototype. Version 1.0 of this branch replaces the core of `main`.
 
 Code without planning is technical debt. The prototype grew one feature at a time, without a
 bounded scope, a product vision or the consolidation of what existed before the next feature
-started. This branch reverses that order: C++ code enters `core/lib` and `core/qt` only after the
+started. The C++ core reverses that order: C++ code enters `core/lib` and `core/qt` only after the
 maintainer closes five conditions. On 2026-11-23 all five are open; the decisions that block them
 are listed in [docs/pending-decisions.md](docs/pending-decisions.md).
 
@@ -103,9 +102,9 @@ map of the documentation is in [docs/README.md](docs/README.md).
 
 ## Repository layout
 
-| Path | Content | On this branch |
+| Path | Content | State |
 | --- | --- | --- |
-| `core/` | The C++23 core: CMake project, build profiles, tests and gates | Active, the focus of the branch |
+| `core/` | The C++23 core: CMake project, build profiles, tests and gates | Active, the focus of the project |
 | `docs/` | Documentation of the C++ core: requirements, architecture, engineering, ADRs | Active |
 | `.github/` | The `CoreCpp 0.1` workflow and the issue and pull request templates | Active |
 | `schemas/ipc.schema.json` | Contract between the UI and the core | Changes only through an approved ADR |
@@ -157,7 +156,8 @@ Configure downloads GoogleTest 1.17.0 with a pinned SHA-256. Without network acc
 ## CI and quality gates
 
 The `CoreCpp 0.1` workflow ([`.github/workflows/core.yml`](.github/workflows/core.yml)) is the only
-CI of this branch. It runs on every push and pull request to the branch, with no path filter, in
+CI of the repository. Every change reaches `main`, the single branch, through a pull request. The
+workflow runs on every pull request into `main` and every push to it, with no path filter, in
 11 jobs on `ubuntu-26.04`: the compiler floor (`dev` with GCC 14 and with Clang 20), GCC 15 in
 every profile, and Clang 22 with clang-tidy 22 in `lint` and in both sanitizer profiles. Actions are
 pinned by commit SHA, and the token is read-only.
