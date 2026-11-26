@@ -70,7 +70,7 @@ flowchart TD
 | [engineering/known-cpp-defects-and-defenses.md](engineering/known-cpp-defects-and-defenses.md) | The classic defects of the language and the defense against each one |
 | [engineering/build-profiles-and-hardening.md](engineering/build-profiles-and-hardening.md) | The build profiles, the flags, their sources and how to run them |
 | [engineering/static-analysis-clang-tidy.md](engineering/static-analysis-clang-tidy.md) | What clang-tidy checks, what is disabled and why |
-| [engineering/test-strategy.md](engineering/test-strategy.md) | The test layers, the differential test against Rust and the performance measurements |
+| [engineering/test-strategy.md](engineering/test-strategy.md) | The test layers, the acceptance against the reference IDEs and the performance measurements |
 | [engineering/gates-and-effectiveness.md](engineering/gates-and-effectiveness.md) | The order the gates run in, the CI, and how a new gate proves that it works |
 | [engineering/definition-of-done.md](engineering/definition-of-done.md) | When a change or a milestone may be called done |
 

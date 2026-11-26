@@ -6,7 +6,7 @@ record of the measurements and the CI.
 ## Order
 
 1. **Deterministic:** compiler with `-Werror`, sanitizers, clang-tidy, tests (build contract,
-   unit, complexity, differential, crash) and validation of the protocol contract.
+   unit, complexity, acceptance, crash) and validation of the protocol contract.
 2. **Project gate**, only with its effectiveness measured by the method below and recorded in
    this file.
 3. **Review** reads the diff, proposes test cases and builds the defect corpora. The numbers

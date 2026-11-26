@@ -1,20 +1,21 @@
 # Test strategy
 
-Owner: the test layers of the core, the rules of every test, the differential test against the
-Rust core and the performance measurement.
+Owner: the test layers of the core, the rules of every test, the acceptance against the reference
+IDEs and the performance measurement.
 
 ## Rules of every test
 
-| Rule | Origin |
-| --- | --- |
-| The proof uses the real tool; a missing tool is NOT PROVEN, never passed | R-TEST-01 of 63 |
-| A test never synchronizes on a fixed time: it waits for an event, or the fake tool has a lock the test controls | R-TEST-03 of 63; L16 |
-| A deadline is a test parameter, never a constant hidden in production code | INF-06 and INF-30 of 0.3 |
-| A test neither reads nor writes the home directory: `HOME` and `XDG_*` point to a temporary directory | R-TEST-04 of 63 |
-| A refactoring does not edit the tests that prove it | R-TEST-07 of 63 |
-| Every guard has a mutant that disables it and must fail | R-TEST-02 of 63 |
-| A test checks the artifact of its own run, never an old binary | L17 (INF-31) |
-| The suite passes in the `dev`, `asan-ubsan` and `tsan` profiles | RNF-QUA-03 |
+- The proof uses the real tool; a missing tool is NOT PROVEN, never passed.
+- A test never synchronizes on a fixed time: it waits for an event, or the fake tool has a lock the
+  test controls (L16).
+- A deadline is a test parameter, never a constant hidden in production code (L19).
+- A test neither reads nor writes the home directory: `HOME` and `XDG_*` point to a temporary
+  directory.
+- A test describes the observable contract, not the implementation, and a refactoring does not
+  edit the tests that prove it.
+- Every guard has a mutant that disables it and must fail.
+- A test checks the artifact of its own run, never an old binary (L17).
+- The suite passes in the `dev`, `asan-ubsan` and `tsan` profiles (RNF-QUA-03).
 
 ## Layers
 
@@ -24,39 +25,30 @@ Rust core and the performance measurement.
 | Unit | Rules and algorithms of `core/lib`, with no event loop and no process | `core/tests/unit/` | Framework in place; the first test of the core is born with the first code |
 | Gate effectiveness | Each project gate rejects the planted defects and accepts the correct forms of its corpus | `core/tests/gates/` | **Exists**: `gate.launcher`, `gate.detach` and `gate.duplication`, in the `lint` preset |
 | Complexity | No path grows faster than linearly (RNF-PERF-01) | `core/tests/complexity/` | To be created |
-| Differential | The C++ core answers like the Rust core | `core/tests/diff/` | Directory with only its `CMakeLists.txt` |
+| Acceptance | Each requirement against its reference IDE, as an observable result on a fixture | The layer that fits each test | To be created, with each requirement |
 | Ordering and concurrency | Forced interleavings: stale generation discarded, cancellation, same resource in series | `core/tests/unit/` | To be created |
 | Crash | `kill -9` on each process, with the loss measured (RNF-DUR-01) and no orphan | `core/tests/crash/` | To be created |
 | Hostile project | Zero marks without trust (RNF-SEG-01) | `core/tests/hostile/` | To be created |
 
-## Differential
+## Acceptance against the reference IDE
 
 ```mermaid
 flowchart LR
-    CASE["test case<br/>JSON-RPC requests"] --> RUST["Rust core binary<br/>the oracle"]
-    CASE --> CPP["C++ core binary"]
-    RUST --> NORM["normalize ids, absolute paths,<br/>times, job ids, unordered events"]
-    CPP --> NORM
-    NORM --> CMP{"equal, or listed as an<br/>intentional divergence?"}
-    CMP -->|yes| PASS["pass"]
-    CMP -->|no| FAIL["fail"]
+    REF["reference IDE<br/>version and source"] --> CASE["fixture and the<br/>observable result"]
+    CASE --> TEST["acceptance test<br/>of the core"]
+    MUT["mutant that breaks<br/>the behavior"] -->|must fail| TEST
 ```
 
-- **The oracle** is the binary of the Rust core, over the JSON-RPC wire, the way the UI uses it.
-  The 622 IPC tests of 0.3 call `handle_request` inside the process (64:310) and cannot compare
-  two processes.
-- **The comparison** happens after normalizing ids, absolute paths, times, job ids and the order
-  of events that have no guaranteed order.
-- **The intentional divergences** live in a versioned list next to the tests, each one with the
-  defect of the oracle it avoids. Without that list, the test rewards reproducing the defect. The
-  initial list:
-  - INF-23: the oracle runs workspace code without trust;
-  - INF-22: an old load of the context lands on top of the new one;
-  - INF-29: an `exec` failure with an abort and a core dump;
-  - INF-30: an expired deadline reported as stale;
-  - ENG-56: the oracle writes personal state in `.kinein`.
-- **The switch criterion** (ADR-0012): each N0 and N1 method passes the differential test, apart
-  from the list.
+- **The behavior** comes from the reference IDE that the requirement names, in the order of
+  [ADR-0012](../adr/ADR-0012-cpp23-backend.md) (item 5): its source code or its official
+  documentation, with the version. A behavior observed by running the IDE records the version and
+  the steps.
+- **The test** states that behavior as a fixture and an observable result of the core, never as a
+  call into its implementation, and a mutant that breaks the behavior must fail it.
+- **A divergence** from the reference is written in the requirement, with its reason (RF-ED-02
+  adds a maximum delay that the backup of VS Code lacks, L04).
+- **No reference** for a behavior: the test proves the expected behavior and how each failure is
+  handled.
 
 ## Complexity
 
