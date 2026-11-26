@@ -1,50 +1,53 @@
-# Contribuir
+# Contributing to Kinein Vectis
 
-**Primeira vez aqui, pessoa ou IA?** Comece por
-[`DocsPublic/00-comece-aqui.md`](DocsPublic/00-comece-aqui.md): as regras que
-valem antes de qualquer outra, onde mora cada fato do projeto e por onde
-começar conforme o que você veio fazer.
+The work happens on the core, in `core/`, on the single branch `main`. The project is in its
+engineering phase: the CI, the gates, the architecture and the requirements come before any code
+of the core ([README](README.md)). The contributions that help now:
 
-O guia completo de quem chega — a ideia do projeto e o que ele recusa ser,
-como preparar o ambiente, o ritual de uma mudança passo a passo, cada gate
-e o porquê dele, como trabalhar **com ou sem um agente de IA**, e o mapa
-de onde mexer — está em **[`DocsPublic/contribuindo/`](DocsPublic/contribuindo/README.md)**.
+- **Review of the documentation and of the requirements:** a gap, a contradiction, a limit with
+  no measurement, a claim with no source.
+- **The comparison of a requirement with its reference IDE:** what CLion, IntelliJ IDEA, VS Code
+  or Zed does in the case, with the version and the source.
+- **The CI and the build:** the `Core 0.1` workflow, the presets and the gates.
 
-```text
-DocsPublic/contribuindo/README.md                 comece aqui (por perfil: bug, funcionalidade, docs, IA)
-DocsPublic/contribuindo/01-o-que-o-projeto-e.md   a ideia, as regras e a data do incidente que criou cada uma
-DocsPublic/contribuindo/02-preparar-o-ambiente.md instalar, compilar, abrir pelo checkout, presets, variáveis de medição
-DocsPublic/contribuindo/03-o-ritual-de-uma-fatia.md desenhar → contrato → core → ponte → UI → provar → documentar → commit
-DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md o verificar.sh e cada gate: o que mede e como ler o "não"
-DocsPublic/contribuindo/06-onde-mexer.md          o mapa por área (código, contrato, docs, testes)
-DocsPublic/contribuindo/07-fluxo-e-responsabilidades-dos-gates.md fluxo, comunicação e dono de cada gate
-DocsPublic/contribuindo/08-convencoes-codigo-testes-commits.md idioma, comentários, testes, commits e onde documentar
-DocsPublic/contribuindo/09-glossario-de-identificadores.md a tradução de cada palavra para os nomes em inglês
-DocsPublic/contribuindo/10-sua-primeira-contribuicao-passo-a-passo.md uma contribuição inteira, do clone ao commit
-DocsPublic/contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md CI pública, requisitos das tarefas e proposta de cards derivados das issues
-DocsPublic/contribuindo/12-licenciamento-e-procedencia.md licenças, fontes correspondentes, SPDX e DCO
-DocsPublic/contribuindo/13-colaboracao-institucional.md autorização, publicação e continuidade de contribuições
-DocsPublic/contribuindo/14-minuta-de-colaboracao-institucional.md modelo de acordo sobre contribuições e infraestrutura
-```
+## Before a change
 
-A versão curta ("onde olhar para mudar o quê") é
-[`DocsPublic/contribuindo.md`](DocsPublic/contribuindo.md); o estado real
-do projeto, medido e datado, é
-[`DocsPublic/roadmaps/40-estado-e-continuidade.md`](DocsPublic/roadmaps/40-estado-e-continuidade.md).
-Contribuições novas seguem a licença do material de destino: código próprio
-sob **AGPL-3.0-only** e documentação própria sob **CC-BY-SA-4.0**, respeitadas
-as licenças específicas. Leia o [DCO 1.1](DCO.txt) e use `git commit -s`
-para certificar a procedência de sua contribuição. Não há cessão
-obrigatória de copyright.
+- **Read only the owner of the subject.** The map of the documentation is
+  [docs/README.md](docs/README.md); each question has one file.
+- **Behavior comes from the reference IDEs**, each cited with its version and its source, the code
+  or the official documentation ([ADR-0012](docs/adr/ADR-0012-cpp23-backend.md)). A claim about a
+  version, an API, a flag or a behavior carries a primary source or a measurement; anything else
+  is stated as not verified.
+- **Design first.** The algorithms, the concurrency and the protocol of the core are designed with
+  the maintainer before any code is written. A new external dependency needs the maintainer's
+  approval and a checked license.
+- **Open an issue first** for anything beyond a small fix, with the
+  [contribution task](.github/ISSUE_TEMPLATE/contribution_task.md) or the
+  [bug report](.github/ISSUE_TEMPLATE/bug_report.md) template.
 
-Os [briefings iniciais da base 0.4](DocsPublic/contribuindo/11-ci-publica-e-tarefas-para-colaboradores.md#31-briefings-iniciais-para-revisão-e-publicação)
-e as [quatro jornadas de Embarcados](DocsPublic/contribuindo/15-tarefas-iniciais-embarcados-0.4.md)
-oferecem pontos de entrada. No GitHub, `good first issue` identifica tarefas
-pequenas já revisadas e `help wanted` sinaliza oportunidades mais amplas;
-os briefings locais ainda precisam de triagem antes de publicação. Os modelos
-de issue e PR em `.github/` orientam escopo, reprodução e evidências.
+## Rules of a change
 
-O [guia de licenciamento](DocsPublic/contribuindo/12-licenciamento-e-procedencia.md)
-define o escopo e as exceções. Se direitos sobre a contribuição pertencerem
-a uma instituição, obtenha a autorização competente conforme a
-[política institucional](DocsPublic/contribuindo/13-colaboracao-institucional.md).
+- **English** for everything a contributor reads or writes: identifiers, comments, messages, file
+  names, documentation, commits and pull requests. The `ui/` directory is translated at the sync
+  with the frontend.
+- **Code:** the C++23 rules, the tool that enforces each one and the comment standard, C1 to C12,
+  are in [the C++23 rules](docs/engineering/cpp23-rules.md).
+- **Documentation:** the rules of [the documentation tree](docs/README.md#rules-of-this-tree).
+- **Done** means the [definition of done](docs/engineering/definition-of-done.md): zero warnings,
+  clean clang-tidy, the tests green in `dev`, `asan-ubsan` and `tsan`, and the list of what was not
+  verified. The commands are in [Building the core](README.md#building-the-core).
+
+## Commits and pull requests
+
+- **Developer Certificate of Origin 1.1:** every commit carries a sign-off (`git commit -s`); no
+  copyright assignment is required ([`DCO.txt`](DCO.txt)).
+- **A pull request into `main`** follows the
+  [pull request template](.github/pull_request_template.md): what changed, what was measured and
+  what was not verified. The `Core 0.1` workflow runs in full on it and has to be green.
+
+## License of a contribution
+
+A contribution takes the license of the material it changes: the project's own code is under
+`AGPL-3.0-only` ([`LICENSE`](LICENSE)) and its own documentation under CC BY-SA 4.0
+([`LICENSE-CC-BY-SA-4.0.txt`](LICENSE-CC-BY-SA-4.0.txt)). The [README](README.md#license) lists
+the exceptions.

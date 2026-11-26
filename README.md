@@ -3,8 +3,8 @@
 **Linux-first IDE for embedded, systems and IoT development.**
 
 > **`main` rebuilds the core of the IDE in C++23.** It is an engineering front: the CI, the
-> quality gates, the architecture and the requirements come before any feature code, and the C++
-> core has no editor functionality yet. The public release is 0.3.5 (tag `v0.3.5`, on the Releases
+> quality gates, the architecture and the requirements come before any feature code, and the core
+> has no editor functionality yet. The public release is 0.3.5 (tag `v0.3.5`, on the Releases
 > page of this repository), built on the Rust prototype.
 
 ## The rewrite
@@ -175,18 +175,8 @@ reproduces the reference machine, and a gate on the roles of the files of each m
 
 ## Contributing
 
-- **English** for everything a contributor reads or writes: identifiers, comments, messages, file
-  names, documentation, commits and pull requests.
-- **Developer Certificate of Origin 1.1:** every commit carries a sign-off (`git commit -s`); no
-  copyright assignment is required
-  ([`DCO.txt`](DCO.txt)).
-- **Comments** follow one standard, C1 to C12
-  ([C++23 rules](docs/engineering/cpp23-rules.md), section "Comments"); the code rules and the
-  tool that enforces each one are in the same file.
-- **Design first:** the core's algorithms, concurrency and protocol are designed with the
-  maintainer before any code is written. A new external dependency needs the maintainer's
-  approval and a checked license.
-- **Issues and pull requests** use the templates in `.github/`.
+How to contribute, the rules of a change and the license of a contribution are in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
